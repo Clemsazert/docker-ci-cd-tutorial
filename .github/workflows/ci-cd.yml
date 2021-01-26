@@ -25,5 +25,16 @@ jobs:
     - name: test
       run: npm run test
       working-directory: ./express
+  ci-flask:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7.4
+      - name: linter
+        run: flake8 --statistics
+      - name: test
+        run: pytest -v --cov=app
 
 # Todo : CD with Heroku
