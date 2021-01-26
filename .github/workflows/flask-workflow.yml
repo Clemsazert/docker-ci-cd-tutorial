@@ -4,13 +4,14 @@ on:
   push:
     paths: 
       - flask/**
-      - .github/workflows/**
+      - .github/workflows/flask-workflow.yml
     branches: [ main ]
 
 jobs:
   ci-flask:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v2
     - name: Setup Python
       uses: actions/setup-python@v2
       with:

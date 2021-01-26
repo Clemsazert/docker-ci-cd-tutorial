@@ -1,10 +1,10 @@
-name: Flask CI/CD
+name: Express CI/CD
 
 on:
   push:
     paths: 
       - express/**
-      - .github/workflows/**
+      - .github/workflows/express-workflow.yml
     branches: [ main ]
 
 jobs:
