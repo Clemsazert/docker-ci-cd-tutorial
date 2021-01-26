@@ -5,7 +5,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  ci-express:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -16,13 +16,14 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - name: directory
-      run: cd express
     - name: dependancies
       run: npm install
+      working-directory: ./express
     - name: linter
       run: npm run lint
-    - name: linter
+      working-directory: ./express
+    - name: test
       run: npm run test
+      working-directory: ./express
 
 # Todo : CD with Heroku
