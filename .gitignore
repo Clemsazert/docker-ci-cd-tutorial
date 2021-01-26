@@ -1,5 +1,10 @@
-# Virtualenv
+# Virtualenv and Caches
 */venv/
+*/__pycache__
+*/.pytest_cache
+
+# Cov
+*/.coverage
 
 # Dependancies
 */node_modules/
