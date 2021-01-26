@@ -16,6 +16,9 @@ jobs:
       with:
         python-version: 3.8.5
         architecture: x64
+    - name: dependencies
+      run: pip install -r requirement.txt
+      working-directory: ./flask
     - name: linter
       run: flake8 --statistics
       working-directory: ./flask
