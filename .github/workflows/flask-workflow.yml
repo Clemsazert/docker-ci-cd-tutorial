@@ -2,29 +2,42 @@ name: Flask CI/CD
 
 on:
   push:
-    paths: 
+    paths:
       - flask/**
       - .github/workflows/flask-workflow.yml
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   ci-flask:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Setup Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.8.5
-        architecture: x64
-    - name: dependencies
-      run: pip install -r requirement.txt
-      working-directory: ./flask
-    - name: linter
-      run: flake8 --statistics
-      working-directory: ./flask
-    - name: test
-      run: pytest -v --cov=app
-      working-directory: ./flask
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8.5
+          architecture: x64
+      - name: dependencies
+        run: pip install -r requirement.txt
+        working-directory: ./flask
+      - name: linter
+        run: flake8 --statistics
+        working-directory: ./flask
+      - name: test
+        run: pytest -v --cov=app
+        working-directory: ./flask
+
+  build-flask:
+    needs: ci-flask
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: akhileshns/heroku-deploy@v3.8.9
+        with:
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: ${{secrets.HEROKU_FLASK_APP_NAME}}
+          heroku_email: ${{secrets.HEROKU_EMAIL}}
+          usedocker: true
+          appdir: ./flask
 
 # Todo : CD with Heroku
