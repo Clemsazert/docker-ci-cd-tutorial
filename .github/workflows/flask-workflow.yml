@@ -4,6 +4,7 @@ on:
   push:
     paths: 
       - flask/**
+      - .github/workflows/**
     branches: [ main ]
 
 jobs:

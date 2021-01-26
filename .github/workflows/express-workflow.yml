@@ -4,6 +4,7 @@ on:
   push:
     paths: 
       - express/**
+      - .github/workflows/**
     branches: [ main ]
 
 jobs:
