@@ -1,0 +1,19 @@
+version: "3.7"
+services:
+  flask-app:
+    image: myapp
+    build:
+      context: ./flask
+      dockerfile: Dockerfile
+    ports:
+      - 5000:5000
+  express-app:
+    image: express-app
+    build:
+      context: ./express
+      dockerfile: Dockerfile
+    environment:
+      PORT: 8000
+      FLASK_SERVICE: flask-app:5000
+    ports:
+      - 8000:8000
