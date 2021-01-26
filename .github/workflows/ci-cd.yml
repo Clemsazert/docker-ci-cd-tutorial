@@ -28,13 +28,16 @@ jobs:
   ci-flask:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Python
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.7.4
-      - name: linter
-        run: flake8 --statistics
-      - name: test
-        run: pytest -v --cov=app
+    - name: Setup Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8.5
+        architecture: x64
+    - name: linter
+      run: flake8 --statistics
+      working-directory: ./flask
+    - name: test
+      run: pytest -v --cov=app
+      working-directory: ./flask
 
 # Todo : CD with Heroku
