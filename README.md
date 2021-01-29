@@ -1,17 +1,17 @@
 # docker-di-cd-tutorial
 Tutorial for docker and CI/CD using Github Actions
 
-📝 Note : the commands are given for Linux/MacOS. If you're on Windows and you successfully installed docker, you probably don't need this tutorial because you are strong AF given the pain in the a** that it is.
+📝 *Note* : the commands are given for Linux/MacOS. If you're on Windows and you successfully installed docker, you probably don't need this tutorial because you are strong AF given the pain in the a** that it is.
 ## 0. Prerequist
 
-- Make sure you have docker installed  and correclty configured (instructions [here](https://docs.docker.com/get-docker/))
+- Make sure you have Docker installed  and correctly configured (instructions [here](https://docs.docker.com/get-docker/))
 - Python 3 installed (just for startup and app verification before containerization)
 - Node 12 installed and npm (for the same reason that above)
 - A Heroku account (free subscription don't worry)
 
 ## 1. App setup
 
-First we will create a Flask app to expose a simple service, annother "Hello World!" because the world is so beautiful! Let's do it !
+First we will create a Flask app to expose a simple service, another "Hello World!", because the world is so beautiful! Let's do it !
 
 1. Create a directory and cd inside : `mkdir tutorial && cd tutorial`
 2. Do it once again for the app : `mkdir flask && cd flask`
@@ -57,7 +57,7 @@ CMD [ "app.py" ]
 
 - We use the official python 3.7 image available on [dockerhub](https://hub.docker.com/_/python) with line `FROM python 3.7`
 
-- We then create a directory inside the container named `app` and copy all the files from the current directory to the app directory inside the container.
+- Then we create a directory inside the container named `app` and copy all the files from the current directory to the app directory inside the container.
 
 - Then we use `RUN` to install the dependencies listed in `requirement.txt`
 
@@ -65,12 +65,12 @@ CMD [ "app.py" ]
 
 ### b. Build the image
 
-First we neef to build the image. It means, in a very simplified way, creating the file system for our future containers to run later.
+First we neef to build the image. It means, in a very simplified way, creating the file system for our future containers to run.
 - `docker build -t flask .`
 
-Note: Make sure you are in the ./flask directory when running the command above, the `.` refers to the current context, Docker will try to find a Dockerfile in it.
+Note: Make sure you are in the `./flask` directory when running the command above, the `.` refers to the current context, Docker will try to find a Dockerfile in it.
 
-Once the image is built, you can visualize it with all the others images you have.
+Once the image is built, you can visualize it among all the others images you have.
 - `docker images` . Run it and you should see at least flask and python:3.7-alpine3.12, as Docker needs it to build flask.
 
 ### c. Run the container
@@ -78,7 +78,7 @@ Once the image is built, you can visualize it with all the others images you hav
 You successfully built the image, our app is now ready to run. Use docker run to launch the container.
 - `docker run flask`
 
-You can visualize the container running with the following command :
+You can visualize the containers running with the following command :
 - `docker ps`
 
 You can see the container id, his name, his status etc ... Copy th id and replace the <container id\> in the following command.
@@ -93,7 +93,7 @@ What bro ? Doesn't work ? You sure ? Actually it was intended 😅
 Quick explanation : our app do runs on localhost:5000, you can check the container logs (`docker logs --tail <container_id>`) or reach it from *inside* the container, it will work. But we have to tell Docker to forward the http traffic from *our* localhost:5000 to the port 5000 on the container running. To do it we can use the option -p (for ports)
 - `docker run -dp 5000:5000 flask`
 
-📝 Note : The first number is the port on the host machine (basically here your computer), and the second one is the port on the container. The -d option (concatenated here with the -p one) means running the conatiner in detatched mode, not linked to the opened shell.
+📝 *Note* : The first number is the port on the host machine (basically here your computer), and the second one is the port on the container. The -d option (concatenated here with the -p one) means running the conatiner in detatched mode, not linked to the opened shell.
 
 You can try again to reach the app from http://localhost:5000 !
 ### d. Fine tuning
@@ -101,7 +101,7 @@ You can try again to reach the app from http://localhost:5000 !
 🛠️ Exercise : find the weight of flask's image.
 (Hint : use docker images ...)
 
-Holly cow it's heavy ! Something about about 900 Mo, for a poor python file running a Flask app ? Let's change that.
+Holly cow it's heavy ! Something about 900 Mo, for a poor python file running a Flask app ? Let's change that.
 
 We got 2 major ways to reduce the image weight.
 
@@ -109,7 +109,7 @@ We got 2 major ways to reduce the image weight.
 
 When running `ls` on /app inside the container before, have you noticed that the `venv` directory was there ? And this README file too, and even the Dockerfile itself ? The app doesn't need those files, and the dependancies are installed running pip so letting the venv in is a terrible idea (doubles the size of the dependencies because they're present 2 times). 
 
-There we god 2 options. 
+We got 2 options. 
 
 We can first modify the Dockerfile and copy only the files we need. For us it's a very small app it's easy, but for bigger projects it can take quite a number of lines to do so.
 
@@ -122,13 +122,13 @@ Dockerfile
 
 2. The base image
 
-🛠️ Exercise: find the base image of python:3.7-alpine3.12, and it's weight. (Hint: docker hub ...)
+🛠️ Exercise: find the base image of python:3.7, and it's weight. (Hint: docker hub ...)
 
-Yes, it's ubuntu. The whole ubuntu. To run a Flask app. There are a lot of ubuntu features that we don't need. We will find a lighter linux distro to run our app. A very knwon one is `alpine`. And guess what, the python registry in docker hub has an image based on alpine !
+Yes, it's ubuntu. The whole ubuntu. To run a Flask app. There are a lot of ubuntu features that we don't need. We might be able to find a lighter linux distro to run our app. A very famous one is `alpine`. And guess what, the python registry in docker hub has an image based on alpine !
 Change the first line of the docker file to :
 - `FROM python:3.7-alpine3.12`
 - Rebuild the image with `docker build -t flask .`
-- Run `docker images`. flask should weight something like 50 mo. Still a bit huge but for no let's say it's good for us.
+- Run `docker images`. flask should weight something like 50 mo. Still a bit huge but for now let's say it's good for us.
 
 ### e. Express App
 
@@ -200,7 +200,7 @@ const port = process.env.PORT || 8000;
 ```
 We used this syntax to tell Express to use an environment variable as the port value to run the app. If the env variable `PORT` is undefined then the default value is `8000`.
 
-Docker lets us multiple ways to expose env variables.
+Docker has multiple ways for us to expose env variables.
 - Inside the Dockerfile, you can use : `ENV PORT=4000`
 - When running the container, you can add the option `--env PORT=4000` or `--env-file .env` to reference a file containing the variables.
 - With docker-compose, but I keep that for the last part.
@@ -209,9 +209,21 @@ Each solution is better depending of your use case. For instance, the solution i
 
 ### f. Dev with the volumes
 
-- Install nodemon as dev dependencie
-- Update Dockerfile
-- `docker run -p 8000:8000 --env PORT=8000 -v "$(pwd)":/app express `
+Our apps are simple, but imagine we want to implement some new cool features (you can guess we will do it soon ...). We will modify our code, but in order to see the changes we will have to rebuild the image and restart a new container with the new image. So looooooong ... But don't worry Docker got our back, with what they call volumes, and most specificaly here a binding mount.
+
+A binding mount is simply a binding beetwen some files or directory on the host machine, and those inside the container. So for our dev purspose, what we'd like is to link our dev files on our computer and those copied when creating the image with the `COPY` instruction.
+
+Let's do it with the Flask App.
+- Use the option `-v` to indicate to Docker to use a volume : `docker run -v "$(pwd)":/app --env -p 5000:5000 flask`
+- The `"$(pwd)` command refers to the current working directory, and `/app` is where the app files are located inside the container.
+- Flask is well built and if for instance you add a comment and save the file, the app should reload.
+
+Now the Express App.
+- Install nodemon as dev dependencie to enable reloading on changes : `npm install --save-dev nodemon`
+- Update Dockerfile to use nodemon in docker run command, so remove the `ENTRYPOINT` and `CMD` lines.
+- Update start command in `package.json` with value `nodemon index.js`
+- Start the container with : `docker run -p 8000:8000 --env PORT=8000 -v "$(pwd)":/app express`
+- Tadaaaa, it should reload on changes !
 
 ### g. Connect both apps
 
@@ -234,7 +246,7 @@ def fibo_service(number):
 
 It simply takes an argument in the url called number and return an dict with the result.
 
-📝 Note : This is the recursive version on Fibonacci terms computation, so the complexity is **HUGE**, feel free to use dynamic programmation paterns to improve the speed !
+📝 *Note* : This is the recursive version on Fibonacci terms computation, so the complexity is **HUGE**, feel free to use dynamic programmation paterns to improve the speed !
 
 Now we will try to reach this route from the Express App, to create some sort of a proxy. Basically it's useless from an dev point of view, just implement Fibo calculation inside the Express App, but it's for the tutorial's purpose. In the `app.js` file :
 
@@ -263,7 +275,7 @@ app.get('/proxy', (req, res) => {
 });
 ```
 
-- The final `app.js` looks like this :
+- The final `app.js` file should look like this :
 ```
 const express = require('express');
 const http = require('http');
@@ -320,7 +332,7 @@ Have you seen the size of the lasts docker run command we used ? That's the very
 version: "3.7"
 services:
   flask-app:
-    image: myapp
+    image: flask
     build:
       context: ./flask
       dockerfile: Dockerfile
@@ -328,8 +340,9 @@ services:
       - 5000:5000
     volumes:
       - "./flask:/app"
+    command: ["python", "app.py"]
   express-app:
-    image: express-app
+    image: express
     build:
       context: ./express
       dockerfile: Dockerfile
@@ -340,9 +353,23 @@ services:
       - 8000:8000
     volumes:
       - "./express:/app"
+    command: ["npm", "start"]
 ```
 
-- Lauch with  `docker-compose up`
+Let's break it down.
+- We start by specifying the compose version to use, here it's `3.7`
+- Then comes the services declarations. A service will basicaly be an app in our case, with an given image, ports etc ...
+- Our first service is called `flask-app`. We can specify which image the container will be started from.
+- Interesting option is the build section. It enables you to tell Docker how to build the container's image before runnning it.
+- Then we got the environment section with our env variables, the ports and the volumes with our binding mounts. Basicaly you find everything we had in the lasts docker run commands but declared in a file.
+- New thing though is the command section. It tells Docker what command to run at container startup.
+
+You can update both Dockerfiles to remove the last 2 lines that where `ENTRYPOINT` and `CMD`, the applications startup will be handled by the command section from the `docker-compose.yml` file. 
+
+Now lauch it with  `docker-compose up`.
+
+📝 *Note* : You can build the containers before lauching them with the option `--build` (`docker-compose up --build`). Also as docker build looks for `Dockerfile` file, docker-compose will look for a `docker-compose.yml` file in the current context. If our file is not named that way of maybe if we have multiple docker-compose files, we can use the option `-f <file/path>`, referencing the file we want (and this option is also available for docker build).
+
 ## 3. Add the CI/CD pipelines
 
 - `pip install flake8 pytest pytest-cov`
