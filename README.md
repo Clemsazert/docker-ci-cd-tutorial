@@ -1,15 +1,26 @@
-# docker-di-cd-tutorial
-Tutorial for docker and CI/CD using Github Actions
+# docker-ci-cd-tutorial
+Tutorial for Docker and CI/CD using Github Actions
 
 📝 *Note* : the commands are given for Linux/MacOS. If you're on Windows and you successfully installed docker, you probably don't need this tutorial because you are strong AF given the pain in the a** that it is.
-## 0. Prerequist
+
+⚠️ *Warning* : I voluntarily don't deep dive in the core concepts and definitions to keep it simple (like CI/CD, Docker Engine etc ...). At first it was a simple tutorial made for one of roommate who told me "Dude Docker is a nightmare". The purpose was just to understand enough what you do not to execute command like a freaking donkey and mess up everything.
+
+### Table of contents
+0. [Prerequist](#prerequist)
+1. [App setup](#app-setup)
+2. [Containerization](#containerization)
+3. [Add the CI/CD pipelines](#cicd-pipelines)
+
+## 0. Prerequist <a name="prerequist"></a>
 
 - Make sure you have Docker installed  and correctly configured (instructions [here](https://docs.docker.com/get-docker/))
 - Python 3 installed (just for startup and app verification before containerization)
 - Node 12 installed and npm (for the same reason that above)
+- Git
+- A Github account
 - A Heroku account (free subscription don't worry)
 
-## 1. App setup
+## 1. App setup <a name="app-setup"></a>
 
 First we will create a Flask app to expose a simple service, another "Hello World!", because the world is so beautiful! Let's do it !
 
@@ -33,7 +44,7 @@ if __name__ == "__main__":
 ```
 5. Run `python app.py` and you should see the server starting up. You can reach it on http://localhost:5000. It should respond "Hello World!".
 
-## 2. Containerization
+## 2. Containerization <a name="containerization></a>
 
 ### a. Dockerfile
 
@@ -340,7 +351,6 @@ services:
       - 5000:5000
     volumes:
       - "./flask:/app"
-    command: ["python", "app.py"]
   express-app:
     image: express
     build:
@@ -364,12 +374,205 @@ Let's break it down.
 - Then we got the environment section with our env variables, the ports and the volumes with our binding mounts. Basicaly you find everything we had in the lasts docker run commands but declared in a file.
 - New thing though is the command section. It tells Docker what command to run at container startup.
 
-You can update both Dockerfiles to remove the last 2 lines that where `ENTRYPOINT` and `CMD`, the applications startup will be handled by the command section from the `docker-compose.yml` file. 
+You can update express app's Dockerfile to remove the last 2 lines that where `ENTRYPOINT` and `CMD`, the application startup will be handled by the command section from the `docker-compose.yml` file. 
 
 Now lauch it with  `docker-compose up`.
 
 📝 *Note* : You can build the containers before lauching them with the option `--build` (`docker-compose up --build`). Also as docker build looks for `Dockerfile` file, docker-compose will look for a `docker-compose.yml` file in the current context. If our file is not named that way of maybe if we have multiple docker-compose files, we can use the option `-f <file/path>`, referencing the file we want (and this option is also available for docker build).
 
-## 3. Add the CI/CD pipelines
+## 3. Add the CI/CD pipelines <a name="cicd-pipelines"></a>
 
-- `pip install flake8 pytest pytest-cov`
+### a. Initial blabla
+
+CI/CD is way more than just buzzword used everywhere on various LinkedIn posts and medium articles (as well as agile, AI and Machine Learning, but that's an other story). 
+
+CI means "Continuous Integration". A simple definition would be the fact of updating your code base as often as possible with the new code you produced, while keeping a decent code quality. 
+
+CD, for "Continuous Delevery", means to deliver new versions of your services as often as possible, the best would be almost real time when you finish developping a new feature.
+
+For both CI and CD, one main motivation is automation. If you already deployed by hand a website or a backend you know it could be really annoying (to be polite). Because the less time you spend deploying, the more time you have to build new features (to make more [moulaga](https://www.youtube.com/watch?v=5OAysfkcMjg) !). For CI it's more about making sure you didn't break something or what you developped actually works as intended (the sooner you detect an issue, the easier it is to fix).
+
+Done with the talking, let's go now.
+
+### b. Versionning of the project
+
+If it's not done yet, you can use git in your project. We could use 2 repos one for each app. But for pedagogic purpose (and also because it's easier), I suggest to create only one repository.
+
+- cd inside the `tutorial` directory
+- Run `git init` to initiate a git repository.
+- Create a `.gitignore` with the following content : 
+```
+# Virtualenv and Caches
+*/venv/
+*/__pycache__
+
+# Dependencies
+*/node_modules/
+```
+
+You wouldn't commit the node_modules don't you ? 👿
+
+- Log in to Github and create a new repo.
+- Follow Github's instructions to add an existing repository (add the remote and push the existing history)
+
+### c. CI for the Flask App
+
+For he CI part we will focus on 2 aspects : code quality and testing. For that we will use a linter to ensure a decent coding style is respected among our code file, and a test suite to make sure our app is working, with a coverage report in order to see the proportion of code we actually test in our test suite.
+
+- In the flask directory, reactivate your venv : `source venv/bin/activate`
+- Install the holy trinity of python package : `pip install flake8 pytest pytest-cov`. Flake8 is a linter, pytest and pytest-cov will help us test our code.
+- Create a file `test_suite.py` with the following content :
+```
+from app import fibo, app
+
+tester = app.test_client()
+
+
+def test_healthcheck():
+    response = tester.get('/', content_type='html/text')
+    assert(response.status_code == 200)
+    assert(response.data == b'Hello, World!')
+
+
+def test_fibo_route():
+    response = tester.get('/fibo/10', content_type='html/text')
+    assert(response.status_code == 200)
+    assert(response.data == b'{"result":55}\n')
+```
+
+⚠️ *Warning* : yes it's not the best tests in the world, but it's not the purpose of this tutorial, there are plenty of articles on how to wright tests suites all over the web !
+
+We simply test the response of the 2 routes we have using app test_client provided by Flask.
+
+- Run the tests with `pytest -v --cov=app`, you should have a coverage of about 90%, great success !
+
+- Run `flake8 --exclude venv --statistics`. Modify the files according to the errors reported by flake8.
+
+### d. A worklow for the Flask App
+
+We will use Github Actions to manage our CI/CD pipelines.
+
+- Create a `.github` directory in the root of the project, with a `workflows` directory in it.
+- Inside create a file named `flask-workflow.yml`.
+- First we need to manage the triggers aka when the workflow will run. We want it to run at every push on the branch master (or main depending on your repo). Add the following snipet to `flask-workflow.yml` :
+```
+name: Flask CI/CD
+
+on:
+  push:
+    branches: [main]
+```
+- Now we need to define jobs. The first one will be the ci.
+```
+jobs:
+  ci-flask:
+```
+- Github wants know on which plateform to run the jobs. For us it will be a container with the latest ubuntu version.
+```
+jobs:
+  ci-flask:
+    runs-on: ubuntu-latest
+```
+- We continue with the steps, meaning the operations we want to perform during the workflow.
+```
+jobs:
+  ci-flask:
+    runs-on: ubuntu-latest
+    steps:
+```
+- First step : we use a Github Action to enable the CI to access our repository. A Github Action is just a ready to use step of workflow made by the community. You can search for them in the Github Market Place. Like always the idea is not to reinvent the wheel.
+```
+jobs:
+  ci-flask:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+```
+- Now we need to setup Python. And guess what ? There also an action for that. Just make sure to select the right python version you used for the projet (3.7 like the image we used)
+```
+steps:
+  - uses: actions/checkout@v2
+  - name: Setup Python
+    uses: actions/setup-python@v2
+    with:
+      python-version: 3.7
+      architecture: x64
+```
+- Like we did with the Dockerfile, we need to install the dependencies.
+```
+steps:
+  - uses: actions/checkout@v2
+  - name: Setup Python
+    uses: actions/setup-python@v2
+    with:
+      python-version: 3.8.5
+      architecture: x64
+  - name: dependencies
+    run: pip install -r requirement.txt
+    working-directory: ./flask
+```
+The structure of the step is always the same : you can just run a command with `run`, you can give a name to your step with `name`. For the actions you must use `uses`, and sometimes they have options or need parameters you give can them with tag `with`.
+- Now we are ready to add our own commands. First the linter :
+```
+- name: linter
+  run: flake8 --statistics
+  working-directory: ./flask
+```
+The `working-directory` option is usefull for us as we have a single repo with 2 apps inside, so that we can specify where to run the steps.
+
+- Then we add the test command.
+```
+- name: test
+  run: pytest -v --cov=app
+  working-directory: ./flask
+```
+- And we are done for our first job. Commit and push it, you should see the workflow running in the Action section of your repository.
+
+### e. Deploying the app and setup the CD
+
+We will use Heroku to deploy our 2 services, since it has a container registry system and a container runtime option.
+
+- Log in to Heroku and create a new app.
+- Come back to our `flask-workflow.yml` file. Let's define an other job called deploy-flask. By default, jobs of a same workflow runs in parallel, but we don't want to deploy our app if the linter found coding style issues or if the tests failed. For that we use the `need` option to ensure the first job as succeed before running the second one.
+```
+deploy-flask:
+    needs: ci-flask
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+```
+- We will need only one real step. There is a cool action built to Deploy on Heroku with Docker, be sure to [check out](https://github.com/marketplace/actions/deploy-to-heroku) and star it.
+```
+- uses: akhileshns/heroku-deploy@v3.8.9
+  with:
+    heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+    heroku_app_name: ${{secrets.HEROKU_FLASK_APP_NAME}}
+    heroku_email: ${{secrets.HEROKU_EMAIL}}
+    usedocker: true
+    appdir: ./flask
+```
+You have to provide the action your api_key, your email and the app_name. But the Heroku api_key is a very sensitive data, not meant to be share publicly. We have to store it as a secret of our repository, that is also accessible inside the workflows using the syntax `${{secrets.<YOUR_ENV_VAR_NAME>}}`
+- Access the repository secrets from `Settings -> Secrets -> New repository secret`
+- Create one secret for each variable (I've also added email and app name even though it's not very sensitive)
+- Commit and push your changes, after the workflow is completed you should be able to see in the Heroku app activity a deployment.
+
+Reach your app on Heroku (Open App button). What do you mean it doesn't work ? Actually it was intended once again. You remember the networking setup, the option to forward port to the container etc ... ?
+
+Actually what Heroku does is exposing to your container an env variable called `PORT` **that you cannot override** and forward all traffic from port 80 (basic http) of your app toward this port.
+
+We need to tell Flaks to run the app using this port. Don't be afraid it's not a big deal.
+
+- In `app.py` after the first line append the following code to get the env variable :
+```
+import os
+
+PORT = int(os.environ.get("PORT", default="5000"))
+```
+
+- Replace the last lines with :
+```
+if __name__ == "__main__":
+    app.run(debug=True, host='0.0.0.0', port=PORT)
+```
+
+- Commit and push your changes. If the workflow doesn't fail, you should see an other deployment of your app and should be able to access it.

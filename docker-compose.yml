@@ -1,14 +1,17 @@
 version: "3.7"
 services:
   flask-app:
-    image: myapp
+    image: flask
     build:
       context: ./flask
       dockerfile: Dockerfile
     ports:
       - 5000:5000
+    volumes:
+      - "./flask:/app"
+    command: ["python", "app.py"]
   express-app:
-    image: express-app
+    image: express
     build:
       context: ./express
       dockerfile: Dockerfile
@@ -17,3 +20,6 @@ services:
       FLASK_SERVICE: flask-app:5000
     ports:
       - 8000:8000
+    volumes:
+      - "./express:/app"
+    command: ["npm", "start"]

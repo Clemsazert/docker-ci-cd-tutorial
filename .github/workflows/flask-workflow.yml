@@ -39,5 +39,3 @@ jobs:
           heroku_email: ${{secrets.HEROKU_EMAIL}}
           usedocker: true
           appdir: ./flask
-
-# Todo : CD with Heroku
